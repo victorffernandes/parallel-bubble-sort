@@ -12,7 +12,7 @@ void compare_change(int *val1, int *val2)
     printf("checking: %d to %d \n", *val1, *val2);
     if (*val1 > *val2)
     {
-        //printf("swapped: %d to %d \n", *val1, *val2);
+        // printf("swapped: %d to %d \n", *val1, *val2);
         int aux = *val1;
         *val1 = *val2;
         *val2 = aux;
@@ -46,7 +46,7 @@ int main(int argc, char **argv)
     MPI_Status status;
 
     int n = 10;
-    int list[10] = {2, 42, 4, 10, 8, 30, 23, 47, 38, 12};
+    int list[10] = {47,38,30,23,12,42,10,8,4,2};
     // int list[10] = {2, 4, 5, 8, 10, 12, 23, 30, 38, 47};
 
     void odd_transposition(int *list, int n, int i_offset, int pid, int pairpid);
@@ -87,6 +87,8 @@ int main(int argc, char **argv)
                     MPI_Recv(&new_final_offset, 1, MPI_INTEGER, (my_rank + 1), COMPARE_MAX_TAG, MPI_COMM_WORLD, &status);
                     // printf("new_final_offset: %d\n", new_final_offset);
                     int new_n = (new_final_offset - initial_offset) + 1;
+                    sync_list_s(list, initial_offset, final_offset, (my_rank + 1));
+                    sync_list_r(list, final_offset + 1, new_final_offset, (my_rank + 1));
                     for (int i = 0; i < (new_n); i++)
                     {
                         // printlist(&list, n);
@@ -98,13 +100,13 @@ int main(int argc, char **argv)
                         else
                         {
                             start_even_transposition(my_rank, 1);
-                            // even_transposition(&list, new_n, initial_offset, id, (my_rank + 1));
+                            even_transposition(&list, new_n, initial_offset, id, (my_rank + 1));
                             // sync_list_s(&list, initial_offset, final_offset + 1, (my_rank + 1));
                             // sync_list_r(&list, final_offset + 2, new_final_offset, (my_rank + 1));
                         }
 
-                        // printlist(&list, n);
                     }
+                    // printlist(&list, n);
                 }
             }
             else
@@ -119,9 +121,13 @@ int main(int argc, char **argv)
                     MPI_Recv(&new_initial_offset, 1, MPI_INTEGER, (my_rank - 1), COMPARE_MIN_TAG, MPI_COMM_WORLD, &status);
                     // printf("new_initial_offset: %d\n", new_initial_offset);
                     int new_n = (final_offset - new_initial_offset) + 1;
+                    sync_list_s(list, initial_offset, final_offset, (my_rank - 1));
+                    sync_list_r(list, new_initial_offset, initial_offset - 1, (my_rank - 1));
+
+                    // printlist(&list, n);
                     for (int i = 0; i < (new_n); i++)
                     {
-                        // printlist(&list, n);
+                        
                         if (i % 2 == 1) // switch between odd and even transpositions
                         {
                             // sync_list_s(&list, initial_offset, final_offset, (my_rank - 1));
@@ -132,7 +138,7 @@ int main(int argc, char **argv)
                         else
                         {
                             start_even_transposition(my_rank, -1);
-                            // even_transposition(&list, new_n, new_initial_offset, id, (my_rank - 1));
+                            even_transposition(&list, new_n, new_initial_offset, id, (my_rank - 1));
                         }
                         // printlist(&list, n);
                     }
@@ -255,7 +261,7 @@ void start_odd_transposition(int rank, int neighbour_offset)
 
 void even_transposition(int *list, int n, int i_offset, int pid, int pairpid)
 {
-     printf("start even pid: %d offset: %d \n", pid, i_offset);
+    // printf("start even pid: %d offset: %d \n", pid, i_offset);
     //printf("calling even transposition to pid: %d \n", pid);
     if (isOdd(pid))
     {
@@ -269,7 +275,7 @@ void even_transposition(int *list, int n, int i_offset, int pid, int pairpid)
         }
         // printf("*end even pid: %d \n", pid);
         sync_list_s(list, i_offset, i_offset + (n / 2) + 1, pairpid);
-        sync_list_r(list, i_offset + (n/2), i_offset + (n - 3) , pairpid);
+        sync_list_r(list, i_offset + (n/2)+1, i_offset + (n - 3) , pairpid);
         // printlist(list, n);
         // printf("end even pid: %d \n", pid);
     }
@@ -285,7 +291,7 @@ void even_transposition(int *list, int n, int i_offset, int pid, int pairpid)
             compare_change(&list[i_offset + (2 * j)], &list[i_offset + (2 * j) + 1]);
         }
         // printf("*end even pid: %d \n", pid);
-        sync_list_s(list, i_offset + (n/2), i_offset + (n - 3) , pairpid);
+        sync_list_s(list, i_offset + (n/2)+1, i_offset + (n - 3) , pairpid);
         sync_list_r(list, i_offset, i_offset + (n / 2) + 1 , pairpid);
         // printf("end even pid: %d \n", pid);
     }
@@ -294,7 +300,7 @@ void even_transposition(int *list, int n, int i_offset, int pid, int pairpid)
 void odd_transposition(int *list, int n, int i_offset, int pid, int pairpid)
 {
     //printf("calling odd transposition to pid: %d n: %d \n", pid, n);
-    printf("start odd pid: %d \n", pid);
+    // printf("start odd pid: %d \n", pid);
     if (isOdd(pid))
     {
         // odd iteration: (a1,a2) (a2,a3),... (an/2-1, an/2)
@@ -307,7 +313,7 @@ void odd_transposition(int *list, int n, int i_offset, int pid, int pairpid)
             compare_change(&list[i_offset + (2 * j) + 1], &list[i_offset + (2 * j) + 2]);
         }
         sync_list_s(list, i_offset + 1, i_offset + (n / 2) + 1 , pairpid);
-        sync_list_r(list, i_offset + (n/2) + 1, i_offset + (n - 1) , pairpid);
+        sync_list_r(list, i_offset + (n/2) + 2, i_offset + (n - 1) , pairpid);
     }
     else
     {
@@ -325,7 +331,7 @@ void odd_transposition(int *list, int n, int i_offset, int pid, int pairpid)
             // printf("value odd comparing: %d to %d \n", list[i_offset + n - 2], list[i_offset + n - 1]);
             compare_change(&list[i_offset + n - 2], &list[i_offset + n - 1]);
         }
-        sync_list_s(list, i_offset + (n/2) + 1, i_offset + (n - 1) , pairpid);
+        sync_list_s(list, i_offset + n/2 + 2, i_offset + (n - 1) , pairpid);
         sync_list_r(list, i_offset + 1, i_offset + (n / 2) + 1 , pairpid);
         // printlist(list, n);
     }
