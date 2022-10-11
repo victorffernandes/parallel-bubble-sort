@@ -162,8 +162,8 @@ int main(int argc, char **argv)
                     MPI_Recv(&new_final_offset, 1, MPI_INTEGER, (my_rank + 1), COMPARE_MAX_TAG, MPI_COMM_WORLD, &status);
                     printf("id: %d initial_offset: %d final_offset: %d pairId: %d\n",id, initial_offset, new_final_offset, id + 1);
                     int new_n = (new_final_offset - initial_offset) + 1;
-                    sync_list_s(&list, initial_offset, final_offset, (my_rank + 1));
-                    sync_list_r(&list, final_offset + 1, new_final_offset, (my_rank + 1));
+                    sync_list_s(&list, 0, n/2, (my_rank + 1));
+                    sync_list_r(&list, n/2, n-1, (my_rank + 1));
                     printf(" \n after iteration: %d id: %d", i, id);
                     printlist(&list, n);
                     for (int i = 0; i < (new_n); i++)
@@ -199,8 +199,8 @@ int main(int argc, char **argv)
                     MPI_Recv(&new_initial_offset, 1, MPI_INTEGER, (my_rank - 1), COMPARE_MIN_TAG, MPI_COMM_WORLD, &status);
                     // printf("new_initial_offset: %d\n", new_initial_offset);
                     printf("id: %d initial_offset: %d final_offset: %d pairId: %d\n",id, new_initial_offset, final_offset, id - 1);
-                    sync_list_s(&list, initial_offset, final_offset, (my_rank - 1));
-                    sync_list_r(&list, new_initial_offset, initial_offset - 1, (my_rank - 1));
+                    sync_list_s(&list, n/2, n-1, (my_rank - 1));
+                    sync_list_r(&list, 0, n/2, (my_rank - 1));
 
                     int new_n = (final_offset - new_initial_offset) + 1;
                     printf(" \n after iteration: %d id: %d", i, id);
