@@ -49,11 +49,12 @@ int isEven(int i)
 int main(int argc, char **argv)
 {
     void bubble_sort(int *list, int n);
+    void sync_list(int * list, int send_initial_offset, int send_final_offset, int r_pid, int rec_initial_offset, int rec_final_offset, int id);
     int my_rank;
     int np;
     MPI_Status status;
 
-    int n = 1000;
+    int n = 10000;
     int list[n];
     listGenerator(list, n);
    
@@ -93,10 +94,11 @@ int main(int argc, char **argv)
                     int new_final_offset;
                     MPI_Status status;
                     MPI_Recv(&new_final_offset, 1, MPI_INTEGER, (my_rank + 1), COMPARE_MAX_TAG, MPI_COMM_WORLD, &status);
-                    // printf("id: %d initial_offset: %d final_offset: %d pairId: %d\n",id, initial_offset, new_final_offset, id + 1);
+                    printf("id: %d initial_offset: %d final_offset: %d pairId: %d\n",id, initial_offset, new_final_offset, id + 1);
                     int new_n = (new_final_offset - initial_offset) + 1;
-                    sync_list_s(list, initial_offset, final_offset, (my_rank + 1));
-                    sync_list_r(list, final_offset + 1, new_final_offset, (my_rank + 1));
+                    sync_list(list, initial_offset, final_offset, (my_rank + 1), final_offset + 1, new_final_offset, (my_rank + 1) );
+                    // sync_list_s(list, initial_offset, final_offset, (my_rank + 1));
+                    // sync_list_r(list, final_offset + 1, new_final_offset, (my_rank + 1));
                     // printf(" \n after iteration: %d id: %d", i, id);
                     for (int i = 0; i < (new_n); i++)
                     {
@@ -122,8 +124,9 @@ int main(int argc, char **argv)
                     MPI_Recv(&new_initial_offset, 1, MPI_INTEGER, (my_rank - 1), COMPARE_MIN_TAG, MPI_COMM_WORLD, &status);
                     //printf("id: %d initial_offset: %d final_offset: %d pairId: %d\n",id, new_initial_offset, final_offset, id - 1);
                     int new_n = (final_offset - new_initial_offset) + 1;
-                    sync_list_s(list, initial_offset, final_offset, (my_rank - 1));
-                    sync_list_r(list, new_initial_offset, initial_offset - 1, (my_rank - 1));
+                    sync_list(list, initial_offset, final_offset, (my_rank - 1),new_initial_offset, initial_offset - 1, (my_rank - 1) );
+                    // sync_list_s(list, initial_offset, final_offset, (my_rank - 1));
+                    // sync_list_r(list, new_initial_offset, initial_offset - 1, (my_rank - 1));
                    
                     //printf(" \n after iteration: %d id: %d", i, id);
                     for (int i = 0; i < (new_n); i++)
@@ -154,8 +157,9 @@ int main(int argc, char **argv)
                     MPI_Recv(&new_final_offset, 1, MPI_INTEGER, (my_rank + 1), COMPARE_MAX_TAG, MPI_COMM_WORLD, &status);
                     //printf("id: %d initial_offset: %d final_offset: %d pairId: %d\n",id, initial_offset, new_final_offset, id + 1);
                     int new_n = (new_final_offset - initial_offset) + 1;
-                    sync_list_s(&list, 0, n/2, (my_rank + 1));
-                    sync_list_r(&list, n/2, n-1, (my_rank + 1));
+                    sync_list(list, 0, n/2, (my_rank + 1), n/2, n-1, (my_rank + 1));
+                    // sync_list_s(&list, 0, n/2, (my_rank + 1));
+                    // sync_list_r(&list, n/2, n-1, (my_rank + 1));
                     //printf(" \n after iteration: %d id: %d", i, id);
                     for (int i = 0; i < (new_n); i++)
                     {
@@ -183,8 +187,9 @@ int main(int argc, char **argv)
                     MPI_Recv(&new_initial_offset, 1, MPI_INTEGER, (my_rank - 1), COMPARE_MIN_TAG, MPI_COMM_WORLD, &status);
                    
                     //printf("id: %d initial_offset: %d final_offset: %d pairId: %d\n",id, new_initial_offset, final_offset, id - 1);
-                    sync_list_s(&list, n/2, n-1, (my_rank - 1));
-                    sync_list_r(&list, 0, n/2, (my_rank - 1));
+                    sync_list(list, n/2, n-1, (my_rank - 1), 0, n/2, (my_rank - 1));
+                    // sync_list_s(&list, n/2, n-1, (my_rank - 1));
+                    // sync_list_r(&list, 0, n/2, (my_rank - 1));
 
                     int new_n = (final_offset - new_initial_offset) + 1;
                     //printf(" \n after iteration: %d id: %d", i, id);
@@ -211,11 +216,11 @@ int main(int argc, char **argv)
     MPI_Finalize();
 
     printf("----- \n");
-    // if(my_rank == 1)
-    // for (int i = 0; i < n; i++)
-    // {
-    //     printf("%d \n", list[i]);
-    // }
+    if(my_rank == 1)
+    for (int i = 0; i < n; i++)
+    {
+        printf("%d \n", list[i]);
+    }
 
     t = clock() - t;
     time_taken = ((double)t)/CLOCKS_PER_SEC;
@@ -265,9 +270,9 @@ void even_transposition(int *list, int n, int i_offset, int pid, int pairpid)
         {
             compare_change(&list[i_offset + (2 * j)], &list[i_offset + (2 * j) + 1]);
         }
-       
-        sync_list_s(list, i_offset, i_offset + (2*(n / 4)) - 1, pairpid);
-        sync_list_r(list, i_offset + (2*(n/4)), i_offset + n - 1, pairpid);
+        sync_list(list, i_offset, i_offset + (2*(n / 4)) - 1, pairpid, i_offset + (2*(n/4)), i_offset + n - 1, pairpid);
+        // sync_list_s(list, i_offset, i_offset + (2*(n / 4)) - 1, pairpid);
+        // sync_list_r(list, i_offset + (2*(n/4)), i_offset + n - 1, pairpid);
     }
     else
     {
@@ -275,9 +280,9 @@ void even_transposition(int *list, int n, int i_offset, int pid, int pairpid)
         {
             compare_change(&list[i_offset + (2 * j)], &list[i_offset + (2 * j) + 1]);
         }
-        sync_list_s(list, i_offset + (2*(n/4)) , i_offset + n - 1, pairpid);
-        sync_list_r(list, i_offset, i_offset + (2*(n / 4)) - 1, pairpid);
-       
+        sync_list(list, i_offset + (2*(n/4)) , i_offset + n - 1, pairpid, i_offset, i_offset + (2*(n / 4)) - 1, pairpid);
+        // sync_list_s(list, i_offset + (2*(n/4)) , i_offset + n - 1, pairpid);
+        // sync_list_r(list, i_offset, i_offset + (2*(n / 4)) - 1, pairpid);
     }
 }
 
@@ -289,8 +294,9 @@ void odd_transposition(int *list, int n, int i_offset, int pid, int pairpid)
         {
             compare_change(&list[i_offset + (2 * j) + 1], &list[i_offset + (2 * j) + 2]);
         }
-        sync_list_s(list, i_offset , i_offset + (2 * (n/4)), pairpid);
-        sync_list_r(list, i_offset + 2 * (n/4) + 1, i_offset + (n - 1) , pairpid);
+        sync_list(list, i_offset , i_offset + (2 * (n/4)), pairpid, i_offset + 2 * (n/4) + 1, i_offset + (n - 1) , pairpid);
+        // sync_list_s(list, i_offset , i_offset + (2 * (n/4)), pairpid);
+        // sync_list_r(list, i_offset + 2 * (n/4) + 1, i_offset + (n - 1) , pairpid);
        
     }
     else
@@ -322,11 +328,28 @@ void sync_list_s(int * list, int initial_offset, int final_offset, int r_pid){
 void sync_list_r(int * list, int initial_offset, int final_offset, int r_pid){
     MPI_Status status;
    
-   
     if(initial_offset == 0){
         MPI_Recv(list, final_offset - initial_offset + 1, MPI_INTEGER, r_pid, SYNC_LIST, MPI_COMM_WORLD, &status);
     } else{
         MPI_Recv(&list[initial_offset], final_offset - initial_offset + 1, MPI_INTEGER, r_pid, SYNC_LIST, MPI_COMM_WORLD, &status);
     }
+
+
+    // printf("received");
+   
+}
+
+void sync_list(int * list, int send_initial_offset, int send_final_offset, int r_pid, int rec_initial_offset, int rec_final_offset, int id){
+    MPI_Status status;
+   
+   
+    // if(send_final_offset == 0){
+    //     MPI_Sendrecv(list, send_initial_offset - send_initial_offset + 1, MPI_INTEGER, r_pid, SYNC_LIST, &list[rec_initial_offset], rec_final_offset - rec_initial_offset + 1, MPI_INTEGER,id, SYNC_LIST, MPI_COMM_WORLD, &status);
+    // } else if(rec_initial_offset == 0) {
+    //     MPI_Sendrecv(&list[send_initial_offset], send_initial_offset - send_initial_offset + 1, MPI_INTEGER, r_pid, SYNC_LIST, list, rec_final_offset - rec_initial_offset + 1, MPI_INTEGER,id, SYNC_LIST, MPI_COMM_WORLD, &status);
+    // }
+
+    MPI_Sendrecv(&list[send_initial_offset], send_initial_offset - send_initial_offset + 1, MPI_INTEGER, r_pid, SYNC_LIST, &list[rec_initial_offset], rec_final_offset - rec_initial_offset + 1, MPI_INTEGER,id, SYNC_LIST, MPI_COMM_WORLD, &status);
+    //printf("received");
    
 }

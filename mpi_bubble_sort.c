@@ -81,7 +81,7 @@ int main(int argc, char **argv)
             { // Odd process number                 // Compare-exchange with the right neighbor process
                 if (id < np)
                 {
-                    // printf("odd process i:%d id: %d\n", i, id);
+                    printf("odd process i:%d id: %d\n", i, id);
                     MPI_Send(&initial_offset, 1, MPI_INTEGER, my_rank + 1, COMPARE_MIN_TAG, MPI_COMM_WORLD);
                     int new_final_offset;
                     MPI_Status status;
