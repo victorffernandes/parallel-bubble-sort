@@ -2,7 +2,7 @@
 #include <stdio.h>
 #include <time.h>
 
-#define NUM_THREADS 2
+#define NUM_THREADS 4
 
 /* swaps the elements */
 void swap(int * x, int * y)
@@ -44,26 +44,26 @@ void oddEvenSort(int arr[], int n)
 }
 
 int main(){
-    int n = 400000;
+    int n = 40000;
     int list[n];
 
     omp_set_num_threads(NUM_THREADS);
     
     FILE *ptr;
 
-    ptr = fopen("400000.bin","wb");  // r for read, b for binary
+    ptr = fopen("40000.bin","wb");  // r for read, b for binary
 
     fread(list,sizeof(int) * n,n,ptr); // read 10 bytes to our buffer
-
     clock_t t;
     t = clock();
-    double time_taken;
 
     oddEvenSort(list, n);
 
     t = clock() - t;
-    time_taken = ((double)t)/CLOCKS_PER_SEC;
-    printf("time taken %f \n", time_taken);
+    double time_taken = ((double)t)/CLOCKS_PER_SEC; // in seconds
+ 
+    printf("simd took %f seconds to execute \n", time_taken);
+
 
     // for (int i = 0; i < n; i++){
     //     printf("%d \n", list[i]);

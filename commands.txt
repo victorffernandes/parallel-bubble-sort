@@ -1,0 +1,22 @@
+ gcc open_mp_bubble_sort_schedule.c -fopenmp -o schedule && ./schedule
+
+ gcc open_mp_bubble_sort_sequential.c -fopenmp -o sequential && ./sequential
+
+  gcc open_mp_bubble_sort.c -fopenmp -o sort && ./sort
+
+
+
+
+
+ gcc open_mp_bubble_sort_schedule.c -fopenmp -o schedule
+
+ gcc open_mp_bubble_sort_sequential.c -fopenmp -o sequential
+   
+gcc open_mp_bubble_sort.c -fopenmp -o sort
+
+ gcc open_mp_bubble_sort_simd.c -o simd -fopenmp
+
+ ./sequential
+ ./sort
+ ./schedule
+ ./simd
