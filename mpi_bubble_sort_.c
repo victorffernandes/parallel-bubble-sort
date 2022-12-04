@@ -54,9 +54,14 @@ int main(int argc, char **argv)
     int np;
     MPI_Status status;
 
-    int n = 10000;
+    int n = 40000;
     int list[n];
-    listGenerator(list, n);
+    
+    FILE *ptr;
+
+    ptr = fopen("40000.bin","wb");  // r for read, b for binary
+
+    fread(list,sizeof(int) * n,n,ptr); // read 10 bytes to our buffer
    
     clock_t t;
     t = clock();
@@ -94,7 +99,7 @@ int main(int argc, char **argv)
                     int new_final_offset;
                     MPI_Status status;
                     MPI_Recv(&new_final_offset, 1, MPI_INTEGER, (my_rank + 1), COMPARE_MAX_TAG, MPI_COMM_WORLD, &status);
-                    printf("id: %d initial_offset: %d final_offset: %d pairId: %d\n",id, initial_offset, new_final_offset, id + 1);
+                    // printf("id: %d initial_offset: %d final_offset: %d pairId: %d\n",id, initial_offset, new_final_offset, id + 1);
                     int new_n = (new_final_offset - initial_offset) + 1;
                     sync_list(list, initial_offset, final_offset, (my_rank + 1), final_offset + 1, new_final_offset, (my_rank + 1) );
                     // sync_list_s(list, initial_offset, final_offset, (my_rank + 1));
@@ -216,11 +221,11 @@ int main(int argc, char **argv)
     MPI_Finalize();
 
     printf("----- \n");
-    if(my_rank == 1)
-    for (int i = 0; i < n; i++)
-    {
-        printf("%d \n", list[i]);
-    }
+    // if(my_rank == 1)
+    // for (int i = 0; i < n; i++)
+    // {
+    //     printf("%d \n", list[i]);
+    // }
 
     t = clock() - t;
     time_taken = ((double)t)/CLOCKS_PER_SEC;

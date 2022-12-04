@@ -1,5 +1,6 @@
 #include <omp.h>
 #include <stdio.h>
+#include <time.h>
 
 /* swaps the elements */
 void swap(int * x, int * y)
@@ -19,7 +20,7 @@ void oddEvenSort(int arr[], int n)
     while (!isSorted) {
         isSorted = 1;
  
-        // Perform Bubble sort on odd indexed element
+        #pragma parallel for
         for (int i = 1; i <= n - 2; i = i + 2) {
             if (arr[i] > arr[i + 1]) {
                 swap(&arr[i], &arr[i + 1]);
@@ -27,7 +28,7 @@ void oddEvenSort(int arr[], int n)
             }
         }
  
-        // Perform Bubble sort on even indexed element
+        #pragma parallel for
         for (int i = 0; i <= n - 2; i = i + 2) {
             if (arr[i] > arr[i + 1]) {
                 swap(&arr[i], &arr[i + 1]);
@@ -40,12 +41,28 @@ void oddEvenSort(int arr[], int n)
 }
 
 int main(){
-    int N = N;
-    int a[N] = {6, 10, 3,2,1,4,5,};
+    int n = 40000;
+    int list[n];
 
-    oddEvenSort(a, N);
+    omp_set_num_threads (1);
+    
+    FILE *ptr;
 
-    for (int i = 0; i < N; i++){
-        printf("%d \n", a[i]);
-    }
+    ptr = fopen("40000.bin","wb");  // r for read, b for binary
+
+    fread(list,sizeof(int) * n,n,ptr); // read 10 bytes to our buffer
+
+    clock_t t;
+    t = clock();
+    double time_taken;
+
+    oddEvenSort(list, n);
+
+    t = clock() - t;
+    time_taken = ((double)t)/CLOCKS_PER_SEC;
+    printf("time taken %f \n", time_taken);
+
+    // for (int i = 0; i < n; i++){
+    //     printf("%d \n", list[i]);
+    // }
 }
